@@ -42,12 +42,20 @@ public class InteractionGraph {
         // add neighbour to set if not already there
         if (!userVertexPairFrom.getValue().contains(userVertexPairTo.getKey())) {
             userVertexPairFrom.getValue().add(userVertexPairTo.getKey());
-            numberOfEdges++;
+
+            // do not count undirected edges twice
+            if (!userVertexPairTo.getValue().contains(userVertexPairFrom.getKey())) {
+                numberOfEdges++;
+            }
         }
 
         if (!userVertexPairTo.getValue().contains(userVertexPairFrom.getKey())) {
             userVertexPairTo.getValue().add(userVertexPairFrom.getKey());
-            numberOfEdges++;
+
+            // do not count undirected edges twice
+            if (!userVertexPairFrom.getValue().contains(userVertexPairTo.getKey())) {
+                numberOfEdges++;
+            }
         }
     }
 
