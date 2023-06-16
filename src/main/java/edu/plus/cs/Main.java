@@ -14,8 +14,14 @@ import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) throws IOException {
+        if (args.length != 3) {
+            System.err.println("Invalid number of arguments! " +
+                    "Usage: java edu.plus.cs.Main <input-file> <output-file> <mapping-file>");
+            return;
+        }
+
         // File inputFile = new File("src/main/resources/test_graph_small.csv");
-        File inputFile = new File("src/main/resources/graph_edges_total_45mil_new.csv");
+        File inputFile = new File(args[0]);
 
         InteractionFileReader interactionFileReader = new InteractionFileReader(inputFile);
         InteractionGraph interactionGraph = new InteractionGraph();
@@ -32,10 +38,10 @@ public class Main {
 
         HashMap<Long, Long> userIdMapping = interactionGraph.getUserVertexIdMapping();
 
-        File outputFile = new File("src/main/resources/output.metis");
+        File outputFile = new File(args[1]);
         MetisFileWriter metisFileWriter = new MetisFileWriter(outputFile, interactionGraph);
         UserIdMappingFileWriter userIdMappingFileWriter =
-                new UserIdMappingFileWriter(new File("src/main/resources/output-user-id-mapping.csv"));
+                new UserIdMappingFileWriter(new File(args[2]));
 
         // convert data to metis format and write the metis + mapping files
         for (long userId : interactionGraph.getAdjacencyLists().keySet()) {
