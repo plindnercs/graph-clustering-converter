@@ -21,7 +21,7 @@ public class Main {
             return;
         }
 
-        int mode = Integer.parseInt(args[4]);
+        int mode = Integer.parseInt(args[3]);
         if (mode < 0 || mode > 2) {
             System.err.println("Invalid processing mode provided! " +
                     "Usage: [mode: 0 - convert and verify | 1 - convert only | 2 - verify only]");
