@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class MetisFileWriter {
@@ -32,12 +33,12 @@ public class MetisFileWriter {
     }
 
 
-    public void writeUserVertexPair(Pair<UserVertex, Set<UserVertex>> userVertexPair,
+    public void writeUserVertexPair(Pair<UserVertex, Map<UserVertex, Integer>> userVertexPair,
                                         HashMap<Long, Long> userIdMapping) throws IOException {
         StringBuilder stringBuilder = new StringBuilder();
 
-        for (UserVertex neighbourVertex : userVertexPair.getValue()) {
-            stringBuilder.append(userIdMapping.get(neighbourVertex.getKey()));
+        for (Map.Entry<UserVertex, Integer> neighbourVertex : userVertexPair.getValue().entrySet()) {
+            stringBuilder.append(userIdMapping.get(neighbourVertex.getKey().getKey()));
             stringBuilder.append(" ");
         }
 

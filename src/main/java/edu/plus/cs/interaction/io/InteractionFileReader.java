@@ -55,4 +55,8 @@ public class InteractionFileReader {
             throw new InputMismatchException("Invalid input format");
         }
     }
+
+    public void close() {
+        fileScanner.close();
+    }
 }
