@@ -14,14 +14,21 @@ import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        if (args.length != 3) {
+        if (args.length < 3 || args.length > 4) {
             System.err.println("Invalid number of arguments! " +
-                    "Usage: java edu.plus.cs.Main <input-file> <output-file> <mapping-file>");
+                    "Usage: java edu.plus.cs.Main <input-file> <output-file> <mapping-file> " +
+                    "[mode: 0 - convert and verify | 1 - convert only | 2 - verify only]");
             return;
         }
 
-        // File inputFile = new File("src/main/resources/test_graph_small.csv");
+        int mode = Integer.parseInt(args[4]);
+        if (mode < 0 || mode > 2) {
+            System.err.println("Invalid processing mode provided! " +
+                    "Usage: [mode: 0 - convert and verify | 1 - convert only | 2 - verify only]");
+        }
+
         File inputFile = new File(args[0]);
+        File outputFile = new File(args[1]);
 
         InteractionFileReader interactionFileReader = new InteractionFileReader(inputFile);
         InteractionGraph interactionGraph = new InteractionGraph();
@@ -36,24 +43,28 @@ public class Main {
 
         interactionFileReader.close();
 
-        HashMap<Long, Long> userIdMapping = interactionGraph.getUserVertexIdMapping();
+        if (mode < 2) {
+            HashMap<Long, Long> userIdMapping = interactionGraph.getUserVertexIdMapping();
 
-        File outputFile = new File(args[1]);
-        MetisFileWriter metisFileWriter = new MetisFileWriter(outputFile, interactionGraph);
-        UserIdMappingFileWriter userIdMappingFileWriter =
-                new UserIdMappingFileWriter(new File(args[2]));
+            MetisFileWriter metisFileWriter = new MetisFileWriter(outputFile, interactionGraph);
+            UserIdMappingFileWriter userIdMappingFileWriter =
+                    new UserIdMappingFileWriter(new File(args[2]));
 
-        // convert data to metis format and write the metis + mapping files
-        for (long userId : interactionGraph.getAdjacencyLists().keySet()) {
-            metisFileWriter.writeUserVertexPair(interactionGraph.getAdjacencyLists().get(userId), userIdMapping);
-            userIdMappingFileWriter.writeUserIdMapping(userId, userIdMapping.get(userId));
+            // convert data to metis format and write the metis + mapping files
+            for (long userId : interactionGraph.getAdjacencyLists().keySet()) {
+                metisFileWriter.writeUserVertexPair(interactionGraph.getAdjacencyLists().get(userId), userIdMapping);
+                userIdMappingFileWriter.writeUserIdMapping(userId, userIdMapping.get(userId));
+            }
+
+            metisFileWriter.close();
+            userIdMappingFileWriter.close();
         }
 
-        metisFileWriter.close();
-        userIdMappingFileWriter.close();
-
-        // verify conversion
-        boolean isCorrect = ConversionVerifier.verifyConversion(interactionGraph, inputFile, outputFile);
+        boolean isCorrect = true;
+        if (mode == 0 || mode == 2) {
+            // verify conversion
+            isCorrect = ConversionVerifier.verifyConversion(interactionGraph, inputFile, outputFile);
+        }
 
         if (isCorrect) {
             System.out.println("Verification successful, graph got converted correctly");
