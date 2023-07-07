@@ -14,10 +14,10 @@ import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        if (args.length < 3 || args.length > 4) {
+        if (args.length < 3 || args.length != 5) {
             System.err.println("Invalid number of arguments! " +
                     "Usage: java edu.plus.cs.Main <input-file> <output-file> <mapping-file> " +
-                    "[mode: 0 - convert and verify | 1 - convert only | 2 - verify only]");
+                    "[mode: 0 - convert and verify | 1 - convert only | 2 - verify only] [verify-nth-edge]");
             return;
         }
 
@@ -25,6 +25,12 @@ public class Main {
         if (mode < 0 || mode > 2) {
             System.err.println("Invalid processing mode provided! " +
                     "Usage: [mode: 0 - convert and verify | 1 - convert only | 2 - verify only]");
+        }
+
+        int verifyNthEdge = 1;
+        if (mode == 0 || mode == 2) {
+            verifyNthEdge = Integer.parseInt(args[4]);
+            System.out.println("Verification of conversion enabled, will verify every " + verifyNthEdge + "-th edge.");
         }
 
         File inputFile = new File(args[0]);
@@ -63,7 +69,7 @@ public class Main {
         boolean isCorrect = true;
         if (mode == 0 || mode == 2) {
             // verify conversion
-            isCorrect = ConversionVerifier.verifyConversion(interactionGraph, inputFile, outputFile);
+            isCorrect = ConversionVerifier.verifyConversion(interactionGraph, inputFile, outputFile, verifyNthEdge);
         }
 
         if (isCorrect) {

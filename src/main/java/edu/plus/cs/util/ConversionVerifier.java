@@ -15,7 +15,7 @@ import java.util.Optional;
 public class ConversionVerifier {
 
     public static boolean verifyConversion(InteractionGraph interactionGraph, File inputFile,
-                                           File outputFile) throws IOException {
+                                           File outputFile, int verifyNthEdge) throws IOException {
         Map<Long, Long> userIdMapping = interactionGraph.getUserVertexIdMapping();
 
         // read line of input file
@@ -23,11 +23,14 @@ public class ConversionVerifier {
         // read output metis file
         MetisFileReader metisFileReader = new MetisFileReader(outputFile);
 
+        long edgeCounter = 0;
         Optional<Interaction> optionalInteraction = interactionFileReader.readLineAsInteraction();
         while (optionalInteraction.isPresent()) {
+            edgeCounter++;
+
             Interaction interaction = optionalInteraction.get();
 
-            // search entry for target user vertex in adjecencyList of source user vertex
+            // search entry for target user vertex in adjacencyList of source user vertex
             UserVertex targetUserVertex = interactionGraph.getUserVertex(interaction.getTargetId());
 
             // decrement cardinalityCounter
@@ -38,21 +41,27 @@ public class ConversionVerifier {
                     --cardinalityCounter);
 
             // check if adjacency is also listed in the output metis file
-            long metisFromId = userIdMapping.get(interaction.getSourceId());
-            long metisToId = userIdMapping.get(interaction.getTargetId());
+            // do this only for certain edges, since the verification would take too long otherwise
+            if (edgeCounter % verifyNthEdge == 0) {
+                long metisFromId = userIdMapping.get(interaction.getSourceId());
+                long metisToId = userIdMapping.get(interaction.getTargetId());
 
-            if (!Arrays.stream(metisFileReader.getVertexById(metisFromId).split(" "))
-                    .anyMatch(id -> (metisToId == Long.parseLong(id)))) {
-                System.err.println("Found edge from UserVertex " + interaction.getSourceId() + " to UserVertex " +
-                        interaction.getTargetId() + " in input file, but outgoing edge is not present in metis file");
-                return false;
-            }
+                if (!Arrays.stream(metisFileReader.getVertexById(metisFromId).split(" "))
+                        .anyMatch(id -> (metisToId == Long.parseLong(id)))) {
+                    System.err.println("Found edge from UserVertex " + interaction.getSourceId() + " to UserVertex " +
+                            interaction.getTargetId() + " in input file, but outgoing edge is not present in metis file");
+                    return false;
+                }
 
-            if (!Arrays.stream(metisFileReader.getVertexById(metisToId).split(" "))
-                    .anyMatch(id -> (metisFromId == Long.parseLong(id)))) {
-                System.err.println("Found edge from UserVertex " + interaction.getSourceId() + " to UserVertex " +
-                        interaction.getTargetId() + " in input file, but incoming edge is not present in metis file");
-                return false;
+                if (!Arrays.stream(metisFileReader.getVertexById(metisToId).split(" "))
+                        .anyMatch(id -> (metisFromId == Long.parseLong(id)))) {
+                    System.err.println("Found edge from UserVertex " + interaction.getSourceId() + " to UserVertex " +
+                            interaction.getTargetId() + " in input file, but incoming edge is not present in metis file");
+                    return false;
+                }
+
+                System.out.println("Successfully verified edge " + interaction.getSourceId()
+                        + " to " + interaction.getTargetId());
             }
 
             optionalInteraction = interactionFileReader.readLineAsInteraction();
@@ -60,7 +69,9 @@ public class ConversionVerifier {
 
         interactionFileReader.close();
 
+        edgeCounter = 0;
         for (Long userVertexId : interactionGraph.getUserVertices().keySet()) {
+            edgeCounter++;
             // check if all adjacencyLists only have entries with cardinalityCounter = 0
             Map<UserVertex, Integer> adjacencyMap = interactionGraph.getAdjacencyLists().get(userVertexId).getValue();
 
@@ -70,12 +81,16 @@ public class ConversionVerifier {
                 return false;
             }
 
-            // check if cardinality of the adjacencyList matches the number of connected nodes in the metis file
-            String metisVertex = metisFileReader.getVertexById(userIdMapping.get(userVertexId));
-            if (metisVertex.trim().split(" ").length != adjacencyMap.size()) {
-                System.err.println("Number of entries in adjacencyList do not match with the number of " +
-                        "connected nodes in the metis file, failed at UserVertex: " + userVertexId);
-                return false;
+            if (edgeCounter % verifyNthEdge == 0) {
+                // check if cardinality of the adjacencyList matches the number of connected nodes in the metis file
+                String metisVertex = metisFileReader.getVertexById(userIdMapping.get(userVertexId));
+                if (metisVertex.trim().split(" ").length != adjacencyMap.size()) {
+                    System.err.println("Number of entries in adjacencyList do not match with the number of " +
+                            "connected nodes in the metis file, failed at UserVertex: " + userVertexId);
+                    return false;
+                }
+
+                System.out.println("User vertex " + userVertexId + " has correct size of adjacency list in metis file");
             }
         }
 

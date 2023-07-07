@@ -13,12 +13,13 @@ public class MetisFileReader {
 
     public MetisFileReader(File file) throws IOException {
         this.file = file;
-        this.lines = Files.lines(file.toPath());
     }
 
     public String getVertexById(long vertexId) throws IOException {
         lines = Files.lines(file.toPath());
-        return lines.skip(vertexId).findFirst().get();
+        String line = lines.skip(vertexId).findFirst().get();
+        close();
+        return line;
     }
 
     public void close() {
