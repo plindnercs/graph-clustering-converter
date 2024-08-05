@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        if (args.length < 3 || args.length != 5) {
+        if (args.length != 5) {
             System.err.println("Invalid number of arguments! " +
                     "Usage: java edu.plus.cs.Main <input-file> <output-file> <mapping-file> " +
                     "[mode: 0 - convert and verify | 1 - convert only | 2 - verify only] [verify-nth-edge]");
